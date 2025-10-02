@@ -4,13 +4,12 @@ import { Button, ScrollView } from 'react-native-web';
 import { use, useState } from 'react';
 
 function Nav() {
- const [activePage, setActivePage] = useState("home")
+  const [activePage, setActivePage] = useState("home")
   return (
     <View>
-      <Button title={"Home"} onPress= {() => setActivePage("home")} />
-      <Button title={"Favoriter"} onPress= {() => setActivePage("favoriter")} />
-      <Button title={"Inställningar"} onPress= {() => setActivePage("inställningar")} />
-        
+      <Button title={"Home"} onPress={() => setActivePage("home")} />
+      <Button title={"Favoriter"} onPress={() => setActivePage("favoriter")} />
+      <Button title={"Inställningar"} onPress={() => setActivePage("inställningar")} />
     </View>
   )
 }
