@@ -9,25 +9,27 @@ export default function FavoritesTab() {
 
   // Läser favoriter när sidan öppnas
   useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const saved = await AsyncStorage.getItem('favorites');
+        if (saved) setFavorites(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+      }
+    };
     loadFavorites();
   }, []);
 
-  const loadFavorites = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('favorites');
-      if (saved) {
-        setFavorites(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error('Error loading favorites:', error);
-    }
-  };
-
+  // Tar bort favorit
   const removeFavorite = async (city: string) => {
-    const updated = favorites.filter(fav => fav !== city);
-    setFavorites(updated);
-    await AsyncStorage.setItem('favorites', JSON.stringify(updated));
-    Alert.alert('Removed', `${city} was removed from favorites.`);
+    try {
+      const updated = favorites.filter(fav => fav !== city);
+      setFavorites(updated);
+      await AsyncStorage.setItem('favorites', JSON.stringify(updated));
+      Alert.alert('Removed', `${city} was removed from favorites.`);
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+    }
   };
 
   return (
@@ -42,10 +44,12 @@ export default function FavoritesTab() {
           keyExtractor={(item) => item}
           renderItem={({ item }) => (
             <View style={styles.item}>
+              {/* Tryck på stad för att visa vädret */}
               <TouchableOpacity onPress={() => router.push(`/?city=${item}`)}>
                 <Text style={styles.city}>{item}</Text>
               </TouchableOpacity>
 
+              {/* Ta bort favorit */}
               <TouchableOpacity onPress={() => removeFavorite(item)}>
                 <Text style={styles.remove}>🗑️</Text>
               </TouchableOpacity>

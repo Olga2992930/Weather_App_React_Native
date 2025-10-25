@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams } from 'expo-router';
 
 const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY;
 
@@ -8,23 +9,31 @@ export default function HomeTab() {
   const [city, setCity] = useState('');
   const [weather, setWeather] = useState<any>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const params = useLocalSearchParams<{ city?: string }>();
 
-    useEffect(() => {
+  // Läser sparade favoriter när sidan öppnas
+  useEffect(() => {
     loadFavorites();
   }, []);
+
+  // Om en stad skickas via params, hämta vädret direkt
+  useEffect(() => {
+    if (params.city) {
+      setCity(params.city);
+      handleSearch(params.city);
+    }
+  }, [params.city]);
 
   const loadFavorites = async () => {
     try {
       const saved = await AsyncStorage.getItem('favorites');
-      if (saved) {
-        setFavorites(JSON.parse(saved));
-      }
+      if (saved) setFavorites(JSON.parse(saved));
     } catch (error) {
       console.error('Error loading favorites:', error);
     }
   };
 
-    const saveFavorites = async (updated: string[]) => {
+  const saveFavorites = async (updated: string[]) => {
     try {
       await AsyncStorage.setItem('favorites', JSON.stringify(updated));
       setFavorites(updated);
@@ -33,7 +42,7 @@ export default function HomeTab() {
     }
   };
 
-    const addFavorite = () => {
+  const addFavorite = () => {
     if (!city.trim()) return;
     if (!favorites.includes(city)) {
       const updated = [...favorites, city];
@@ -44,11 +53,12 @@ export default function HomeTab() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!city.trim()) return;
+  const handleSearch = async (searchCity?: string) => {
+    const query = searchCity || city;
+    if (!query.trim()) return;
     try {
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city.trim()}&appid=${API_KEY}&units=metric`
+        `https://api.openweathermap.org/data/2.5/weather?q=${query.trim()}&appid=${API_KEY}&units=metric`
       );
       const data = await response.json();
       if (data.cod === 200) {
@@ -73,7 +83,7 @@ export default function HomeTab() {
         onChangeText={setCity}
       />
 
-      <Button title="Get weather" onPress={handleSearch} />
+      <Button title="Get weather" onPress={() => handleSearch()} />
 
       {weather && (
         <View style={styles.result}>
@@ -97,54 +107,15 @@ export default function HomeTab() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    width: '100%',
-    marginBottom: 10,
-  },
-  result: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  city: {
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  temp: {
-    fontSize: 32,
-    marginVertical: 5,
-  },
-  desc: {
-    fontSize: 18,
-    textTransform: 'capitalize',
-  },
-  icon: {
-    width: 100,
-    height: 100,
-  },
-  favoriteButton: {
-    marginTop: 10,
-    backgroundColor: '#FFD700',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-  },
-  favoriteText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, width: '100%', marginBottom: 10 },
+  result: { marginTop: 20, alignItems: 'center' },
+  city: { fontSize: 22, fontWeight: 'bold' },
+  temp: { fontSize: 32, marginVertical: 5 },
+  desc: { fontSize: 18, textTransform: 'capitalize' },
+  icon: { width: 100, height: 100 },
+  favoriteButton: { marginTop: 10, backgroundColor: '#FFD700', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  favoriteText: { fontSize: 16, fontWeight: 'bold' },
 });
+
